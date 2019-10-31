@@ -158,7 +158,6 @@ public class PhotoProcUtil extends DialogUtils {
         return bitmap;
     }
 
-
     public static Bitmap getCompressedImage(InputStream stream, int targetW, int targetH){
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -190,7 +189,7 @@ public class PhotoProcUtil extends DialogUtils {
 
         return bitmap;
     }
-
+  
     public static void pickGalleryImage(Activity activity) {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.INTERNAL_CONTENT_URI);

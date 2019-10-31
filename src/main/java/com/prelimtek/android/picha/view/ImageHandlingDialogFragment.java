@@ -73,9 +73,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
     private MediaDAOInterface dbHelper;
 
-    /*public void setDBHelper(MediaDAOInterface localDao) {
-     */
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,7 +109,9 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
         //Bind view to image model
         View view = inflater.inflate( R.layout.image_handling_fragment_layout, container, false);
+
         binding  = DataBindingUtil.findBinding(view);
+
         if(binding==null){
             binding = DataBindingUtil.bind(view);
         }
@@ -256,6 +255,7 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                     + " is not of type OnImageEditedModelListener");
         }
     }
+
 
     public static final int REQUEST_IMAGE_CAPTURE_CODE = 1001;
     public static final int REQUEST_TAKE_PHOTO_CODE = 2001;
@@ -471,33 +471,33 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
     /**
      * See pickGalleryImage()
-     @Deprecated
-     private void dispatchLoadPhotoIntent() {
-     //Intent searchImageIntent = new Intent(MediaStore.INTENT_ACTION_MEDIA_SEARCH);
-     Intent searchImageIntent = new Intent(Intent.ACTION_PICK,
-     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI );
+    @Deprecated
+    private void dispatchLoadPhotoIntent() {
+        //Intent searchImageIntent = new Intent(MediaStore.INTENT_ACTION_MEDIA_SEARCH);
+        Intent searchImageIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI );
 
 
-     if (searchImageIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-     // Create the File where the photo should go
-     File photoFile = null;
-     try {
-     photoFile = createImageFile();
-     } catch (IOException ex) {
-     // Error occurred while creating the File
-     ex.printStackTrace();
-     }
-     // Continue only if the File was successfully created
-     if (photoFile != null) {
-     Uri photoURI = FileProvider.getUriForFile(getActivity(),
-     "io.mtini.android.fileprovider",
-     photoFile);
-     searchImageIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-     this.startActivityForResult(searchImageIntent, REQUEST_IMAGE_CAPTURE_CODE);
-     //System.out.println("IntentData = "+takePictureIntent.getData());
-     }
-     }
-     }
+        if (searchImageIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(getActivity(),
+                        "io.mtini.android.fileprovider",
+                        photoFile);
+                searchImageIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                this.startActivityForResult(searchImageIntent, REQUEST_IMAGE_CAPTURE_CODE);
+                //System.out.println("IntentData = "+takePictureIntent.getData());
+            }
+        }
+    }
      */
 
     /**
@@ -651,15 +651,11 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
         }
     }
 
-
     @Override
     public void onImageDeleted(final String imageId) {
         System.out.println("!!!!!!!!!!!!     onImageDeleted called");
-
         currentImagesModel.getImageNames().remove(imageId);
         refreshListFragment();
-
-
     }
 
 }
