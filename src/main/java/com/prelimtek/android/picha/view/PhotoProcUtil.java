@@ -68,7 +68,7 @@ public class PhotoProcUtil extends DialogUtils {
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(activity,
-                        "io.mtini.android.fileprovider",
+                        getAuthorityProvider(activity),
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 activity.startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO_CODE);
@@ -158,7 +158,6 @@ public class PhotoProcUtil extends DialogUtils {
         return bitmap;
     }
 
-
     public static Bitmap getCompressedImage(InputStream stream, int targetW, int targetH){
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
@@ -190,7 +189,7 @@ public class PhotoProcUtil extends DialogUtils {
 
         return bitmap;
     }
-
+  
     public static void pickGalleryImage(Activity activity) {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.INTERNAL_CONTENT_URI);
@@ -454,5 +453,13 @@ public class PhotoProcUtil extends DialogUtils {
         dialog.show();
 
         return dialog;
+    }
+
+    public static String getAuthorityProvider(Context context) {
+
+        String res =  context.getResources().getString(R.string.authority_file_provider);
+        if(res ==null) return "io.mtini.android.fileprovider";
+
+        return res;
     }
 }
