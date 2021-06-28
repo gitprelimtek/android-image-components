@@ -1,6 +1,7 @@
 package com.prelimtek.android.picha.view;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -29,6 +30,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.prelimtek.android.alerts.DisplayAlertsBroadcastReceiver;
 import com.prelimtek.android.basecomponents.Configuration;
 import com.prelimtek.android.basecomponents.dialog.DialogUtils;
 import com.prelimtek.android.picha.ImagesModel;
@@ -73,6 +75,7 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     private ImageHandlingFragmentLayoutBinding binding;
 
     private MediaDAOInterface dbHelper;
+    private Activity callingActivity;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,6 +83,8 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
         oldImagesModel = (ImagesModel)getArguments().getSerializable(ARG_SELECTED_MODEL_IMAGE);
         dbHelper = (MediaDAOInterface)getArguments().getSerializable(ARG_DB_HELPER);
+
+         callingActivity = getActivity();
 
         if (savedInstanceState != null) {
 
@@ -127,31 +132,34 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                     @Override
                     public void onClick(final View v) {
 
+                        v.setEnabled(false);
+
                         ImageHandlingFragmentLayoutBinding binding  = DataBindingUtil.findBinding(v);
                         final ImagesModel newImagesModel = binding.getImagesModel();
 
 
-                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder( getActivity() );
+                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder( callingActivity );
                         dialogBuilder.setMessage(R.string.dialog_changes_message)
                                 .setTitle(R.string.dialog_changes_title);
 
                         dialogBuilder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 
                             public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                                dismiss();
                                 // User clicked OK button
-                                Dialog progress = DialogUtils.startProgressDialog( getActivity() );
+                                DisplayAlertsBroadcastReceiver.startGenericProgress(callingActivity,"Updating images dialog");
 
                                 try {
                                     updateComplete(newImagesModel, oldImagesModel);
                                 }catch(Throwable e){
                                     Log.e(TAG,e.getMessage(),e);
-                                    progress.dismiss();
-                                    DialogUtils.startErrorDialog( getActivity() ,"An error occurred. '"+e.getLocalizedMessage()+"'" );
+                                    DisplayAlertsBroadcastReceiver.sendErrorMessage(callingActivity,"An error occurred. '"+e.getLocalizedMessage()+"'");
                                     return;
+                                }finally{
+                                    DisplayAlertsBroadcastReceiver.stopProgress(callingActivity);
+                                    //ImageHandlingDialogFragment.super.dismiss();
                                 }
-
-                                progress.dismiss();
-                                dismiss();
                             }
                         });
 
