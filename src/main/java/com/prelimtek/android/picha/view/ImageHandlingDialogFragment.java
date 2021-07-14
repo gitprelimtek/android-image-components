@@ -146,18 +146,19 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-                                dismiss();
                                 // User clicked OK button
-                                DisplayAlertsBroadcastReceiver.startGenericProgress(callingActivity,"Updating images dialog");
+                                //DisplayAlertsBroadcastReceiver.startGenericProgress(callingActivity,"Updating images dialog");
 
                                 try {
                                     updateComplete(newImagesModel, oldImagesModel);
+
+                                    dismiss();
                                 }catch(Throwable e){
                                     Log.e(TAG,e.getMessage(),e);
                                     DisplayAlertsBroadcastReceiver.sendErrorMessage(callingActivity,"An error occurred. '"+e.getLocalizedMessage()+"'");
                                     return;
                                 }finally{
-                                    DisplayAlertsBroadcastReceiver.stopProgress(callingActivity);
+                                    //DisplayAlertsBroadcastReceiver.stopProgress(callingActivity);
                                     //ImageHandlingDialogFragment.super.dismiss();
                                 }
                             }
