@@ -7,10 +7,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,24 +26,24 @@ import android.widget.ProgressBar;
 import com.prelimtek.android.picha.ImagesModel;
 import com.prelimtek.android.picha.view.listener.OnImageDeletedListener;
 import com.prelimtek.android.picha.R;
-import com.prelimtek.android.picha.dao.MediaDAOInterface;
 import com.prelimtek.android.picha.view.adapter.ImageRecyclerViewAdapter;
+import com.prelimtek.android.picha.viewmodel.ImageMediaViewModel;
 
 import java.util.List;
 
 /**
  * This class is used for displaying image lists and adding some listener functionality:
  * Currently using an adaptor with a clickListener to display a larger image.
- *
+ * <p>
  * TODO: Future will include delete functionality perhaps using a swipe also set an 'editable' flag in bundle???
- *
+ * <p>
  * I have not found a good use for OnImageDeletedListener interface
- *
+ * <p>
  * This class can be called from a dialog or activity. To include delete functionality an argument should
  * be passed to
  *
  * @author kaniundungu
- * **/
+ **/
 public class ImageListDisplayFragment extends Fragment {
 
     public static String TAG = Class.class.getSimpleName();
@@ -50,20 +56,29 @@ public class ImageListDisplayFragment extends Fragment {
     OnImageDeletedListener mCallback;
 
     @NonNull
-    private MediaDAOInterface dbHelper;
+    //private MediaDAOInterface dbHelper;
 
     private boolean isEditable = false;
 
+    /*@Deprecated
     public void setDBHelper(MediaDAOInterface localDao) {
         dbHelper = localDao;
-    }
+    }*/
 
+    ImageMediaViewModel mediaViewModel;
+
+    private ImageMediaViewModel getMediaViewModel() {
+        if (mediaViewModel == null) {
+            mediaViewModel = new ViewModelProvider((AppCompatActivity) getActivity(), new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication())).get(ImageMediaViewModel.class);
+        }
+        return mediaViewModel;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        super.onCreateView(inflater,container,savedInstanceState);
+        super.onCreateView(inflater, container, savedInstanceState);
 
-        View view =  inflater.inflate( R.layout.images_recycler_view_layout , container,false);
+        View view = inflater.inflate(R.layout.images_recycler_view_layout, container, false);
 
         return view;
     }
@@ -78,130 +93,131 @@ public class ImageListDisplayFragment extends Fragment {
         try {
             //dbHelper =  AppDAO.builder().open(currentContext);
         } catch (Exception e) {
-            Log.e(TAG,e.getMessage());
+            Log.e(TAG, e.getMessage());
         }
 
+        LifecycleOwner lifecycleOwner = (LifecycleOwner) this.getActivity();
         //get data object passed by previous activity
-        final ImagesModel imagesModel = (ImagesModel)getArguments().getSerializable(IMAGE_LIST_OBJECT_KEY);
+        //final ImagesModel imagesModel = (ImagesModel)getArguments().getSerializable(IMAGE_LIST_OBJECT_KEY);
+        //ImagesModel imagesModel = getMediaViewModel().getCurrentImages().getValue();
+        ImageMediaViewModel mediaViewModel = getMediaViewModel();
+        LiveData<ImagesModel> imageLiveData = mediaViewModel.getCurrentImages();
+        imageLiveData.observe(lifecycleOwner, imagesModel -> {
 
-        isEditable = getArguments().getBoolean(IMAGE_IS_EDITABLE_BOOL_KEY,false);
+            isEditable = getArguments().getBoolean(IMAGE_IS_EDITABLE_BOOL_KEY, false);
 
-        assert imagesModel!=null;
-
-
-        //if list is not empty display last image
-        if(imagesModel.getImageNames()!=null && !imagesModel.getImageNames().isEmpty()){
-
-            int imgCount = imagesModel.getImageNames().size();
-            final List<String> imageNamesList = imgCount>ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE?imagesModel.getImageNames().subList(0,ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE) :imagesModel.getImageNames();
-
-            //Now bind the list of Images using an adapter
-            LinearLayoutManager layoutManager = new LinearLayoutManager(currentContext,RecyclerView.HORIZONTAL,false);
-            RecyclerView recyclerView = (RecyclerView)view.findViewById(R.id.imageslist_recyclerview) ;
-            ImageRecyclerViewAdapter dataAdapter = new ImageRecyclerViewAdapter(
-                    currentContext,
-                    imageNamesList,
-                    R.layout.list_image_layout,
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-
-                            String imageid = (String)v.getTag();
-
-                            //Snackbar.make(v, "Selected image for Details", Snackbar.LENGTH_LONG)
-                            //        .setAction("Action", null).show();
+            assert imagesModel != null;
 
 
-                            setImageAsCurrent(v.getRootView(),imageid);
+            //if list is not empty display last image
+            if (imagesModel.getImageNames() != null && !imagesModel.getImageNames().isEmpty()) {
 
-                        }
-                    },
-                    dbHelper
-            );
-            //dataAdapter.setDBHelper(dbHelper);
-            recyclerView.setAdapter(dataAdapter);
-            recyclerView.setOnFlingListener(new PageFlingListerner(layoutManager) {
+                int imgCount = imagesModel.getImageNames().size();
+                final List<String> imageNamesList = imgCount > ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE ? imagesModel.getImageNames().subList(0, ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE) : imagesModel.getImageNames();
 
-                boolean isLoading = false;
-                @Override
-                public void loadNextPage() {
+                //Now bind the list of Images using an adapter
+                LinearLayoutManager layoutManager = new LinearLayoutManager(currentContext, RecyclerView.HORIZONTAL, false);
+                RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.imageslist_recyclerview);
+                ImageRecyclerViewAdapter dataAdapter = new ImageRecyclerViewAdapter(
+                        currentContext,
+                        imageNamesList,
+                        R.layout.list_image_layout,
+                        new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
 
-                    int offset = viewedItems==0?0:viewedItems;
+                                String imageid = (String) v.getTag();
+
+                                setImageAsCurrent(v.getRootView(), imageid);
+
+                            }
+                        },
+                        getMediaViewModel()
+                );
+                recyclerView.setAdapter(dataAdapter);
+                recyclerView.setOnFlingListener(new PageFlingListerner(layoutManager) {
+
+                    boolean isLoading = false;
+
+                    @Override
+                    public void loadNextPage() {
+
+                        int offset = viewedItems == 0 ? 0 : viewedItems;
 
 
-                    queryDS(ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE,offset);
+                        queryDS(ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE, offset);
 
-                    showFirstPage();
-                }
-
-                @Override
-                public void loadPreviousPage() {
-
-                    int offset = viewedItems-2*ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE;
-                    offset = offset < 0 ? 0 : offset;
-
-                    queryDS(ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE,offset);
-
-                    showLastPage();
-
-                }
-
-                private void queryDS(int rowcount, int offset){
-
-                    if(isLoading) return;
-
-                    showProgress(isLoading = true);
-
-                    try {
-
-                        int size = imagesModel.getImageNames().size();
-                        if(offset >= size) return;
-
-                        offset = offset<0?0:offset;
-                        int start = offset >= size ? size-1: offset;
-                        int end = offset+rowcount >= size ? size: offset+rowcount;
-
-                        List<String> imageNamesList = imagesModel.getImageNames().subList(start,end);
-
-                        if(imageNamesList==null || imageNamesList.isEmpty())return;
-
-                        dataAdapter.setRowItems(imageNamesList);
-                        dataAdapter.notifyDataSetChanged();
-
-                    }catch(RuntimeException e){
-                        e.printStackTrace();
-                    }finally {
-                        viewedItems = offset+(imageNamesList==null?0:imageNamesList.size());
-                        showProgress(isLoading = false);
+                        showFirstPage();
                     }
-                }
 
-                @Override
-                public boolean isLoading() {
-                    return isLoading;
-                }
+                    @Override
+                    public void loadPreviousPage() {
 
-                @Override
-                public void showProgress(boolean show) {
-                    ProgressBar progress = (ProgressBar)view.findViewById(R.id.load_image_progress) ;
-                    if(show)
-                        progress.setVisibility(ProgressBar.VISIBLE);
-                    else
-                        progress.setVisibility(ProgressBar.GONE);
-                }
-            });
-            recyclerView.setLayoutManager(layoutManager);
+                        int offset = viewedItems - 2 * ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE;
+                        offset = offset < 0 ? 0 : offset;
+
+                        queryDS(ImageRecyclerViewAdapter.PAGE_BUFFER_SIZE, offset);
+
+                        showLastPage();
+
+                    }
+
+                    private void queryDS(int rowcount, int offset) {
+
+                        if (isLoading) return;
+
+                        showProgress(isLoading = true);
+
+                        try {
+
+                            int size = imagesModel.getImageNames().size();
+                            if (offset >= size) return;
+
+                            offset = offset < 0 ? 0 : offset;
+                            int start = offset >= size ? size - 1 : offset;
+                            int end = offset + rowcount >= size ? size : offset + rowcount;
+
+                            List<String> imageNamesList = imagesModel.getImageNames().subList(start, end);
+
+                            if (imageNamesList == null || imageNamesList.isEmpty()) return;
+
+                            dataAdapter.setRowItems(imageNamesList);
+                            dataAdapter.notifyDataSetChanged();
+
+                        } catch (RuntimeException e) {
+                            e.printStackTrace();
+                        } finally {
+                            viewedItems = offset + (imageNamesList == null ? 0 : imageNamesList.size());
+                            showProgress(isLoading = false);
+                        }
+                    }
+
+                    @Override
+                    public boolean isLoading() {
+                        return isLoading;
+                    }
+
+                    @Override
+                    public void showProgress(boolean show) {
+                        ProgressBar progress = (ProgressBar) view.findViewById(R.id.load_image_progress);
+                        if (show)
+                            progress.setVisibility(ProgressBar.VISIBLE);
+                        else
+                            progress.setVisibility(ProgressBar.GONE);
+                    }
+                });
+                recyclerView.setLayoutManager(layoutManager);
 
 
-        }
+            }
+        });
     }
 
 
-
     private void setImageAsCurrent(View v, final String imageid) {
-        String encodedBitmap = dbHelper.getImageById(imageid);
+        String encodedBitmap = getMediaViewModel().getLocalImageById(imageid);
 
-        if(encodedBitmap!=null) {
+        if (encodedBitmap != null) {
             Bitmap bitmap = PhotoProcUtil.StringifyBitmapCodec.decode(encodedBitmap);
             if (isEditable) {
 
@@ -214,11 +230,12 @@ public class ImageListDisplayFragment extends Fragment {
                         //TODO add tooltip with instruction on how to delete
 
                         if (mCallback == null)
-                            return ;
+                            return;
 
-                        parentDialog.dismiss();;
+                        parentDialog.dismiss();
+                        ;
 
-                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder( getActivity() );
+                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getActivity());
                         dialogBuilder
                                 .setMessage(R.string.dialog_changes_message)
                                 .setTitle(R.string.dialog_changes_title);
@@ -226,26 +243,26 @@ public class ImageListDisplayFragment extends Fragment {
                         dialogBuilder
                                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 
-                            public void onClick(DialogInterface curdialog, int id) {
-                                // User clicked OK button
-                                Dialog progress = PhotoProcUtil.startProgressDialog( getActivity() );
+                                    public void onClick(DialogInterface curdialog, int id) {
+                                        // User clicked OK button
+                                        Dialog progress = PhotoProcUtil.startProgressDialog(getActivity());
 
-                                try {
+                                        try {
 
-                                        mCallback.onImageDeleted(imageid);
+                                            mCallback.onImageDeleted(imageid);
 
-                                }catch(Throwable e){
-                                    Log.e(TAG,e.getMessage(),e);
-                                    progress.dismiss();
-                                    PhotoProcUtil.startErrorDialog( getActivity() ,"An error occurred. '"+e.getLocalizedMessage()+"'" );
-                                    return;
-                                }
+                                        } catch (Throwable e) {
+                                            Log.e(TAG, e.getMessage(), e);
+                                            progress.dismiss();
+                                            PhotoProcUtil.startErrorDialog(getActivity(), "An error occurred. '" + e.getLocalizedMessage() + "'");
+                                            return;
+                                        }
 
-                                curdialog.dismiss();
-                                progress.dismiss();
+                                        curdialog.dismiss();
+                                        progress.dismiss();
 
-                            }
-                        });
+                                    }
+                                });
 
                         dialogBuilder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
@@ -262,7 +279,7 @@ public class ImageListDisplayFragment extends Fragment {
                 });
 
             } else {
-                Dialog dialog = PhotoProcUtil.startImageDialog(v.getContext(), bitmap,true);
+                Dialog dialog = PhotoProcUtil.startImageDialog(v.getContext(), bitmap, true);
 
             }
         }
@@ -276,8 +293,8 @@ public class ImageListDisplayFragment extends Fragment {
 
     /**
      * This is setter is called by parent fragment which is child aware
-     * */
-    public void setCallback(OnImageDeletedListener callback){
+     */
+    public void setCallback(OnImageDeletedListener callback) {
         mCallback = callback;
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception.
@@ -317,11 +334,12 @@ public class ImageListDisplayFragment extends Fragment {
     }
 
 
-    abstract class PageFlingListerner extends RecyclerView.OnFlingListener{
+    abstract class PageFlingListerner extends RecyclerView.OnFlingListener {
 
         static final int velocity = 500;
 
         LinearLayoutManager layoutManager = null;
+
         public PageFlingListerner(LinearLayoutManager layoutManager) {
             this.layoutManager = layoutManager;
         }
@@ -333,13 +351,13 @@ public class ImageListDisplayFragment extends Fragment {
             int last = layoutManager.findLastVisibleItemPosition();
             int count = layoutManager.getInitialPrefetchItemCount();
 
-            if(velocityX>velocity || velocityY>velocity ){
-                if(last==count ) {
+            if (velocityX > velocity || velocityY > velocity) {
+                if (last == count) {
                     loadNextPage();
                     return true;
                 }
-            }else if(velocityX < -velocity || velocityY< -velocity){
-                if(first==0 ){
+            } else if (velocityX < -velocity || velocityY < -velocity) {
+                if (first == 0) {
                     loadPreviousPage();
                     return true;
                 }
@@ -348,21 +366,24 @@ public class ImageListDisplayFragment extends Fragment {
             return false;
         }
 
-        public void showFirstPage(){
+        public void showFirstPage() {
             int count = layoutManager.getInitialPrefetchItemCount();
-            if(count>0)
+            if (count > 0)
                 layoutManager.scrollToPosition(0);
         }
 
-        public void showLastPage(){
+        public void showLastPage() {
             int count = layoutManager.getInitialPrefetchItemCount();
-            if(count>0)
-                layoutManager.scrollToPosition(count-1);
+            if (count > 0)
+                layoutManager.scrollToPosition(count - 1);
         }
 
         abstract public void loadNextPage();
+
         abstract public void loadPreviousPage();
+
         abstract public boolean isLoading();
+
         abstract public void showProgress(boolean show);
 
     }

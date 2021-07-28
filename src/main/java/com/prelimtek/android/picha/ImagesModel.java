@@ -6,18 +6,19 @@ import androidx.databinding.Bindable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 
-public class ImagesModel extends BaseObservable implements Serializable, Cloneable{
+public class ImagesModel extends BaseObservable implements Serializable, Cloneable {
 
     private String modelId;
-    private List<String> imageNames;
+    private List<String> imageNames = new ArrayList<String>();
 
-    public ImagesModel(String modelId ,List<String> imageNames){
+    public ImagesModel(String modelId, List<String> imageNames) {
         this.modelId = modelId;
-        this.imageNames = imageNames==null?new ArrayList<String>():imageNames;
+        this.imageNames.addAll(imageNames);
     }
 
     @Bindable
@@ -41,7 +42,7 @@ public class ImagesModel extends BaseObservable implements Serializable, Cloneab
     }
 
     public void addImageName(String imageName) {
-        this.imageNames.add(imageName);
+        Collections.addAll(imageNames, imageName);
         notifyPropertyChanged(BR.imageNames);
     }
 
@@ -59,7 +60,7 @@ public class ImagesModel extends BaseObservable implements Serializable, Cloneab
     public String toString() {
         return "ImagesModel{" +
                 ", modelId='" + modelId + '\'' +
-                ", imageNames=" + Arrays.toString(imageNames.toArray() )+
+                ", imageNames=" + Arrays.toString(imageNames.toArray()) +
                 '}';
     }
 
@@ -67,7 +68,7 @@ public class ImagesModel extends BaseObservable implements Serializable, Cloneab
     @Override
     public int hashCode() {
 
-        return Objects.hash( modelId, imageNames);
+        return Objects.hash(modelId, imageNames);
     }
 
     @Override
@@ -82,11 +83,11 @@ public class ImagesModel extends BaseObservable implements Serializable, Cloneab
     @Override
     public ImagesModel clone() throws CloneNotSupportedException {
         List<String> imageNamesClone = null;
-        if(imageNames!=null){
+        if (imageNames != null) {
             imageNamesClone = new ArrayList<String>(imageNames);
         }
 
-        ImagesModel clone = (ImagesModel)super.clone();
+        ImagesModel clone = (ImagesModel) super.clone();
         clone.setImageNames(imageNamesClone);
         return clone;
     }

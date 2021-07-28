@@ -18,9 +18,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+
 import android.util.Base64;
 import android.util.Log;
 import android.widget.ImageView;
@@ -40,6 +42,7 @@ import com.prelimtek.android.basecomponents.dialog.DialogUtils;
 import com.prelimtek.android.picha.ImagesModel;
 import com.prelimtek.android.picha.R;
 import com.prelimtek.android.picha.dao.MediaDAOInterface;
+import com.prelimtek.android.picha.viewmodel.ImageMediaViewModel;
 
 public class PhotoProcUtil extends DialogUtils {
 
@@ -106,7 +109,7 @@ public class PhotoProcUtil extends DialogUtils {
     }
 
 
-    public static void setPic(String mCurrentPhotoPath,ImageView mImageView) {
+    public static void setPic(String mCurrentPhotoPath, ImageView mImageView) {
         // Get the dimensions of the View
         int targetW = mImageView.getWidth();
         int targetH = mImageView.getHeight();
@@ -119,7 +122,7 @@ public class PhotoProcUtil extends DialogUtils {
         int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
-        float scaleFactor = Math.min((float)photoW/targetW, (float)photoH/targetH);
+        float scaleFactor = Math.min((float) photoW / targetW, (float) photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -130,7 +133,7 @@ public class PhotoProcUtil extends DialogUtils {
         mImageView.setImageBitmap(bitmap);
     }
 
-    public static Bitmap getCompressedImage(String path, int targetW, int targetH){
+    public static Bitmap getCompressedImage(String path, int targetW, int targetH) {
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
@@ -139,7 +142,7 @@ public class PhotoProcUtil extends DialogUtils {
         int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
-        float scaleFactor = Math.min((float)photoW/targetW, (float)photoH/targetH);
+        float scaleFactor = Math.min((float) photoW / targetW, (float) photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -155,7 +158,7 @@ public class PhotoProcUtil extends DialogUtils {
         return bitmap;
     }
 
-    public static Bitmap getCompressedImage(InputStream stream, int targetW, int targetH){
+    public static Bitmap getCompressedImage(InputStream stream, int targetW, int targetH) {
 
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         //bmOptions.inJustDecodeBounds = true;
@@ -167,7 +170,7 @@ public class PhotoProcUtil extends DialogUtils {
         int photoH = largeBitmap.getHeight();
 
         // Determine how much to scale down the image
-        float scaleFactor = Math.min((float)photoW/targetW, (float)photoH/targetH);
+        float scaleFactor = Math.min((float) photoW / targetW, (float) photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -182,11 +185,11 @@ public class PhotoProcUtil extends DialogUtils {
         largeBitmap.compress(Bitmap.CompressFormat.PNG, 0, outStream);
 
         byte[] largeBitmapBytes = outStream.toByteArray();
-        Bitmap bitmap = BitmapFactory.decodeByteArray(largeBitmapBytes, 0,largeBitmapBytes.length,bmOptions);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(largeBitmapBytes, 0, largeBitmapBytes.length, bmOptions);
 
         return bitmap;
     }
-  
+
     public static void pickGalleryImage(Activity activity) {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.INTERNAL_CONTENT_URI);
@@ -210,7 +213,7 @@ public class PhotoProcUtil extends DialogUtils {
                     Intent.ACTION_PICK,
                     MediaStore.Images.Media.INTERNAL_CONTENT_URI
             );
-            intent.setType( "image/*");
+            intent.setType("image/*");
             //intent.putExtra("crop", "true");
             //intent.putExtra("scale", true);
             //intent.putExtra("aspectX", 16);
@@ -240,114 +243,141 @@ public class PhotoProcUtil extends DialogUtils {
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        setPic(mImageView,bitmap);
+        setPic(mImageView, bitmap);
     }
 
 
-    public static void setPic(ImageView imageView, Bitmap bitmap){
+    public static void setPic(ImageView imageView, Bitmap bitmap) {
         ///resize image
         int photoW = bitmap.getWidth();
         int photoH = bitmap.getHeight();
 
         // Determine how much to scale down the image
-        float scaleFactor = 1 ;
+        float scaleFactor = 1;
         if (Build.VERSION.SDK_INT < 16) {
-            scaleFactor = Math.max((float)imageView.getWidth() / photoW, (float)imageView.getHeight() / photoH);
-        }else {
-             scaleFactor = Math.max( (float)imageView.getMaxWidth() / photoW, (float)imageView.getMaxHeight() / photoH);
+            scaleFactor = Math.max((float) imageView.getWidth() / photoW, (float) imageView.getHeight() / photoH);
+        } else {
+            scaleFactor = Math.max((float) imageView.getMaxWidth() / photoW, (float) imageView.getMaxHeight() / photoH);
         }
-        photoW = Math.round(photoW*scaleFactor);
-        photoH = Math.round(photoH*scaleFactor);
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap,photoW,photoH,false);
+        photoW = Math.round(photoW * scaleFactor);
+        photoH = Math.round(photoH * scaleFactor);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, photoW, photoH, false);
         imageView.setImageBitmap(resizedBitmap);
 
     }
 
-    public static byte[] toBytes(Bitmap bitmap){
+    public static byte[] toBytes(Bitmap bitmap) {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream);
-        byte[] bitmapBytes=  stream.toByteArray();
+        byte[] bitmapBytes = stream.toByteArray();
         return bitmapBytes;
     }
 
     /**
      * Compress and base 64 encode this bitmap to string.
-    * Deprected! use PhotoProcUtil.StringifyBitmapCodec.encode instead
-     * */
+     * Deprected! use PhotoProcUtil.StringifyBitmapCodec.encode instead
+     */
     @Deprecated
-    public static String toEncodedStringBytes(Bitmap bitmap){
+    public static String toEncodedStringBytes(Bitmap bitmap) {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream);
-        byte[] bitmapBytes =  stream.toByteArray();
-        byte[] compressedBytes =  FileUtils.CompressionCodec.compress(bitmapBytes);
-        return Base64.encodeToString(compressedBytes,Base64.NO_WRAP);
+        byte[] bitmapBytes = stream.toByteArray();
+        byte[] compressedBytes = FileUtils.CompressionCodec.compress(bitmapBytes);
+        return Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
     }
 
     /**
      * Assume this base64 encoded String of image is compressed. Decode to bytes and Decompress.
      * Then create Bitmap.
      * Deprected! use PhotoProcUtil.StringifyBitmapCodec.decode instead
-     * */
+     */
     @Deprecated
-    public static Bitmap toBitMap(String encodedStringBytes){
+    public static Bitmap toBitMap(String encodedStringBytes) {
 
-        byte[] imageBytes = Base64.decode(encodedStringBytes,Base64.NO_WRAP);
+        byte[] imageBytes = Base64.decode(encodedStringBytes, Base64.NO_WRAP);
 
         byte[] decompressedBytes = new byte[0];
         try {
-            decompressedBytes =  FileUtils.CompressionCodec.decompress(imageBytes);
+            decompressedBytes = FileUtils.CompressionCodec.decompress(imageBytes);
         } catch (DataFormatException e) {
-            Log.e(TAG,e.getMessage());
+            Log.e(TAG, e.getMessage());
             e.printStackTrace();
             decompressedBytes = imageBytes;
         }
 
-        Bitmap bitmap =  BitmapFactory.decodeByteArray(decompressedBytes, 0, decompressedBytes.length);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(decompressedBytes, 0, decompressedBytes.length);
 
         return bitmap;
     }
 
-    public static class StringifyBitmapCodec{
+    public static class StringifyBitmapCodec {
         /**
          * Compress and base 64 encode this bitmap to string.
-         * */
-        public static String encode(Bitmap bitmap){
+         */
+        public static String encode(Bitmap bitmap) {
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream);
-            byte[] bitmapBytes =  stream.toByteArray();
-            byte[] compressedBytes =  FileUtils.CompressionCodec.compress(bitmapBytes);
-            return Base64.encodeToString(compressedBytes,Base64.NO_WRAP);
+            byte[] bitmapBytes = stream.toByteArray();
+            byte[] compressedBytes = FileUtils.CompressionCodec.compress(bitmapBytes);
+            return Base64.encodeToString(compressedBytes, Base64.NO_WRAP);
         }
 
         /**
          * Assume this base64 encoded String of image is compressed. Decode to bytes and Decompress.
          * Then create Bitmap.
-         * */
-        public static Bitmap decode(String encodedStringBytes){
+         */
+        public static Bitmap decode(String encodedStringBytes) {
 
-            byte[] imageBytes = Base64.decode(encodedStringBytes,Base64.NO_WRAP);
+            byte[] imageBytes = Base64.decode(encodedStringBytes, Base64.NO_WRAP);
 
             byte[] decompressedBytes = new byte[0];
             try {
-                decompressedBytes =  FileUtils.CompressionCodec.decompress(imageBytes);
+                decompressedBytes = FileUtils.CompressionCodec.decompress(imageBytes);
             } catch (DataFormatException e) {
-                Log.e(TAG,e.getMessage());
+                Log.e(TAG, e.getMessage());
                 e.printStackTrace();
                 decompressedBytes = imageBytes;
             }
 
-            Bitmap bitmap =  BitmapFactory.decodeByteArray(decompressedBytes, 0, decompressedBytes.length);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(decompressedBytes, 0, decompressedBytes.length);
 
             return bitmap;
         }
     }
 
-    public static void showOrRefreshImageListFragment(@NonNull ImagesModel currentImagesModel, @NonNull FragmentManager childTransactionManager , @NonNull MediaDAOInterface dbHelper, boolean editable){
+    /**
+     * This method is dependent on Media ViewModel being initialized in the calling activity/fragment
+     */
+    public static void showOrRefreshImageListFragment(@NonNull FragmentManager childTransactionManager, boolean editable) {
 
-        System.out.println("!!!!!!!!  showOrRefreshImageListFragment called -> currentImagesModel size ="+currentImagesModel.getImageNames().size());
+        FragmentTransaction transaction = childTransactionManager.beginTransaction();
+
+        Fragment oldFragment = childTransactionManager.findFragmentById(R.id.image_list_fragment);
+
+        ImageListDisplayFragment newImgsListFragment = new ImageListDisplayFragment();
+        Bundle imgBundle = new Bundle();
+        imgBundle.putBoolean(ImageListDisplayFragment.IMAGE_IS_EDITABLE_BOOL_KEY, editable);
+        newImgsListFragment.setArguments(imgBundle);
+
+
+        if (oldFragment != null) {
+            transaction
+                    .replace(R.id.image_list_fragment, newImgsListFragment).commit();
+        } else {
+            transaction
+                    .add(R.id.image_list_fragment, newImgsListFragment).commit();
+        }
+
+
+    }
+
+    @Deprecated
+    public static void showOrRefreshImageListFragment(@NonNull ImagesModel currentImagesModel, @NonNull FragmentManager childTransactionManager, @NonNull MediaDAOInterface dbHelper, boolean editable) {
+
+        System.out.println("!!!!!!!!  showOrRefreshImageListFragment called -> currentImagesModel size =" + currentImagesModel.getImageNames().size());
 
         //FragmentManager childTransactionManager = getChildFragmentManager();
 
@@ -357,18 +387,18 @@ public class PhotoProcUtil extends DialogUtils {
 
 
         ImageListDisplayFragment newImgsListFragment = new ImageListDisplayFragment();
-        newImgsListFragment.setDBHelper(dbHelper);
+        //newImgsListFragment.setDBHelper(dbHelper);
         Bundle imgBundle = new Bundle();
         imgBundle.putSerializable(ImageListDisplayFragment.IMAGE_LIST_OBJECT_KEY, currentImagesModel);
         imgBundle.putBoolean(ImageListDisplayFragment.IMAGE_IS_EDITABLE_BOOL_KEY, editable);
         newImgsListFragment.setArguments(imgBundle);
 
 
-        if(oldFragment!=null){
+        if (oldFragment != null) {
             //transaction.detach(oldFragment).attach(newImgsListFragment).commit();
             transaction
                     .replace(R.id.image_list_fragment, newImgsListFragment).commit();
-        }else {
+        } else {
             transaction
                     .add(R.id.image_list_fragment, newImgsListFragment).commit();
         }
@@ -376,13 +406,13 @@ public class PhotoProcUtil extends DialogUtils {
 
     }
 
-    public static Dialog startImageDialog(Context context, Bitmap bitmap, DialogInterface.OnClickListener listener){
+    public static Dialog startImageDialog(Context context, Bitmap bitmap, DialogInterface.OnClickListener listener) {
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context);
         //TODO add icon dialogBuilder.setIcon()
         dialogBuilder.setMessage(R.string.dialog_delete_image)
                 .setTitle(R.string.dialog_image_details);
-        dialogBuilder.setPositiveButton(R.string.delete,listener);
+        dialogBuilder.setPositiveButton(R.string.delete, listener);
         dialogBuilder.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.dismiss();
@@ -397,7 +427,7 @@ public class PhotoProcUtil extends DialogUtils {
         imageView.setMaxWidth(Configuration.imageDialogMaxWidth);
         //imageView.setOnLongClickListener(listener);
         RelativeLayout.LayoutParams params =
-                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
+                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 
         //dialog.addContentView(imageView,params);
         dialog.setView(imageView);
@@ -408,17 +438,17 @@ public class PhotoProcUtil extends DialogUtils {
         return dialog;
     }
 
-    public static Dialog startImageDialog(Context context, Bitmap bitmap){
-        return startImageDialog(context,bitmap,false);
+    public static Dialog startImageDialog(Context context, Bitmap bitmap) {
+        return startImageDialog(context, bitmap, false);
     }
 
-    public static Dialog startImageDialog(Context context, Bitmap bitmap,boolean negativeDismissButton){
+    public static Dialog startImageDialog(Context context, Bitmap bitmap, boolean negativeDismissButton) {
 
-        AlertDialog dialog=null;
+        AlertDialog dialog = null;
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context);
 
-        if(negativeDismissButton) {
+        if (negativeDismissButton) {
             dialogBuilder.setTitle(R.string.dialog_image_details);
             dialogBuilder.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
@@ -431,9 +461,9 @@ public class PhotoProcUtil extends DialogUtils {
         ImageView imageView = new ImageView(context);
         imageView.setMaxHeight(Configuration.imageDialogMaxHeight);
         imageView.setMaxWidth(Configuration.imageDialogMaxWidth);
-        imageView.setMinimumHeight(bitmap.getHeight() );
-        imageView.setMinimumWidth(bitmap.getWidth() );
-        setPic(imageView,bitmap);
+        imageView.setMinimumHeight(bitmap.getHeight());
+        imageView.setMinimumWidth(bitmap.getWidth());
+        setPic(imageView, bitmap);
 
         //RelativeLayout.LayoutParams params =
         //        new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -448,8 +478,8 @@ public class PhotoProcUtil extends DialogUtils {
 
     public static String getAuthorityProvider(Context context) {
 
-        String res =  context.getResources().getString(R.string.authority_file_provider);
-        if(res ==null) return "io.mtini.android.fileprovider";
+        String res = context.getResources().getString(R.string.authority_file_provider);
+        if (res == null) return "io.mtini.android.fileprovider";
 
         return res;
     }

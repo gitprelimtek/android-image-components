@@ -12,8 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.prelimtek.android.picha.R;
-import com.prelimtek.android.picha.dao.MediaDAOInterface;
 import com.prelimtek.android.picha.view.PhotoProcUtil;
+import com.prelimtek.android.picha.viewmodel.ImageMediaViewModel;
 
 import java.util.List;
 
@@ -54,23 +54,15 @@ public class ImageRecyclerViewAdapter extends RecyclerView.Adapter<ImageRecycler
     View.OnClickListener onClickListener;
     int layoutId = -1;
     LayoutInflater inflator = null;
-    MediaDAOInterface db = null;
+    ImageMediaViewModel viewModel = null;
 
-
-
-    public ImageRecyclerViewAdapter(@NonNull  Context context, @NonNull List<String> items,int layoutId,@NonNull View.OnClickListener onClickListener,@NonNull  MediaDAOInterface dbHelper) {
+    public ImageRecyclerViewAdapter(@NonNull  Context context, @NonNull List<String> items,int layoutId,@NonNull View.OnClickListener onClickListener,@NonNull ImageMediaViewModel mediaViewModel) {
         this.context = context;
         this.rowItems = items;
         this.onClickListener = onClickListener;
         this.layoutId=layoutId;
         this.inflator = LayoutInflater.from(context);
-        this.db = dbHelper;
-        /*try {
-            //TODO make this cache
-            db =  AppDAO.builder().open(context);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
+        this.viewModel = mediaViewModel;
     }
 
     public void setRowItems(List<String> imageNamesList) {
@@ -96,7 +88,7 @@ public class ImageRecyclerViewAdapter extends RecyclerView.Adapter<ImageRecycler
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String imageId = rowItems.get(position);
         String rowItem = (String) getItem(position);
-        String encodedBitmap = db.getImageById(rowItem);
+        String encodedBitmap = viewModel.getLocalImageById(rowItem);
 
         if(encodedBitmap!=null) {
             Bitmap bitmap = PhotoProcUtil.StringifyBitmapCodec.decode(encodedBitmap);
@@ -116,8 +108,5 @@ public class ImageRecyclerViewAdapter extends RecyclerView.Adapter<ImageRecycler
     public Object getItem(int position) {
         return rowItems.get(position);
     }
-
-
-
 
 }
