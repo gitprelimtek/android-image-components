@@ -84,12 +84,16 @@ public class ImageMediaViewModel extends AndroidViewModel {
     private ImagesModel loadCurEstateImages() {
 
         String[] imageIds = localDao.getImageIdList(modelId);
+
         ImagesModel images = new ImagesModel(modelId, Arrays.asList(imageIds));
+
         return images;
     }
 
     public LiveData<ImagesModel> initializeModel(String modelId) throws CloneNotSupportedException {
+
         this.modelId = modelId;
+
         LiveData<ImagesModel> images = new MutableLiveData<ImagesModel>(loadCurEstateImages());
 
         oldImages = images == null ? null : (images.getValue() == null ? null : images.getValue().clone());
