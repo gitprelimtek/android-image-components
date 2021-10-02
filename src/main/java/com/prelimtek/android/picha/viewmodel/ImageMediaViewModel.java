@@ -83,7 +83,7 @@ public class ImageMediaViewModel extends AndroidViewModel {
 
     private ImagesModel loadCurEstateImages() {
 
-        String[] imageIds = localDao.getImageIdList(modelId);
+        String[] imageIds = modelId==null?new String[0]:localDao.getImageIdList(modelId);
 
         ImagesModel images = new ImagesModel(modelId, Arrays.asList(imageIds));
 
