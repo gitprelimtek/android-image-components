@@ -38,7 +38,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@android:color/white"
             android:id="@+id/textImageActionLinearLayout"
             android:layout_below="@+id/textImageActionDetails">
 
@@ -70,6 +69,7 @@
                             android:tooltipText="@string/photo_images_tooltip"
                             app:imageSrc="@drawable/camera_30"
                             app:text="@string/photo"
+                            app:textPosition="text_bottom"
                             android:id="@+id/take_a_photo_button"
                             />
 
@@ -79,8 +79,9 @@
                             android:layout_height="wrap_content"
                             android:layout_margin="@dimen/btn_layout_margin"
                             android:tooltipText="@string/external_images_tooltip"
-                            app:imageSrc="@drawable/micro_sd_40"
+                            app:imageSrc="@drawable/micro_sd_30"
                             app:text="@string/external"
+                            app:textPosition="text_bottom"
                             android:id="@+id/external_photo_button"
                             />
 
@@ -89,8 +90,9 @@
                             android:layout_height="wrap_content"
                             android:layout_margin="@dimen/btn_layout_margin"
                             android:tooltipText="@string/gallery_images_tooltip"
-                            app:imageSrc="@drawable/film_roll_40"
+                            app:imageSrc="@drawable/film_roll_30"
                             app:text="@string/gallery"
+                            app:textPosition="text_bottom"
                             android:id="@+id/gallery_photo_button"
                             />
 
@@ -113,27 +115,25 @@
 
 
 
-                            <com.prelimtek.android.customcomponents.view.CustomImageButton
+                            <Button
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentLeft="true"
                                 android:layout_marginHorizontal="@dimen/custom_btn_horizontal_margin"
                                 android:tooltipText="@string/save_close_btn_tooltip"
-                                app:imageSrc="@drawable/save_close_24"
-                                app:text="@string/save_close"
+                                android:text="@string/save_close"
                                 android:id="@+id/update_images_Btn"
                                 />
 
 
 
-                            <com.prelimtek.android.customcomponents.view.CustomImageButton
+                            <Button
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentRight="true"
                                 android:layout_marginHorizontal="@dimen/custom_btn_horizontal_margin"
                                 android:tooltipText="@string/cancel"
-                                app:imageSrc="@drawable/trash"
-                                app:text="@string/cancel"
+                                android:text="@string/cancel"
                                 android:id="@+id/cancel_images_edit_Btn"
                                 />
 

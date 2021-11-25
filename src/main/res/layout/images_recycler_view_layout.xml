@@ -7,7 +7,8 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical">
+        android:layout_gravity="center_vertical"
+        android:background="@color/image_list_background">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/imageslist_recyclerview"
