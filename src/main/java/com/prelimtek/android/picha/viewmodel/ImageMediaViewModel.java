@@ -101,6 +101,15 @@ public class ImageMediaViewModel extends AndroidViewModel {
         return images;
     }
 
+    public LiveData<ImagesModel> initializeModel() throws CloneNotSupportedException {
+
+        this.modelId = null;
+
+        LiveData<ImagesModel> images = new MutableLiveData<ImagesModel>(loadCurEstateImages());
+
+        return images;
+    }
+
     public LiveData<ImagesModel> getCurrentImages() {
 
         return curImages == null ? new MutableLiveData<ImagesModel>(loadCurEstateImages()) : curImages;
