@@ -20,6 +20,8 @@
         android:scrollIndicators="right"
         android:id="@+id/imageHandlerLinearLayout">
 
+        <include layout="@layout/action_bar" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
