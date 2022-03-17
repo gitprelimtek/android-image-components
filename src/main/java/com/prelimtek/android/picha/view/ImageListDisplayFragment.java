@@ -6,10 +6,13 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
@@ -51,6 +54,7 @@ public class ImageListDisplayFragment extends Fragment {
 
     public final static String IMAGE_LIST_OBJECT_KEY = "imagesModel";
     public final static String IMAGE_IS_EDITABLE_BOOL_KEY = "editable";
+    public final static String IMAGE_IS_ENABLED_BOOL_KEY = "enabled";
     public int viewedItems = 0;
 
     OnImageDeletedListener mCallback;
@@ -59,6 +63,8 @@ public class ImageListDisplayFragment extends Fragment {
     //private MediaDAOInterface dbHelper;
 
     private boolean isEditable = false;
+    //TODO remove
+    private boolean isEnabled = true;
 
     /*@Deprecated
     public void setDBHelper(MediaDAOInterface localDao) {
@@ -105,7 +111,8 @@ public class ImageListDisplayFragment extends Fragment {
         imageLiveData.observe(lifecycleOwner, imagesModel -> {
 
             isEditable = getArguments().getBoolean(IMAGE_IS_EDITABLE_BOOL_KEY, false);
-
+            //TODO remove
+            isEnabled = getArguments().getBoolean(IMAGE_IS_ENABLED_BOOL_KEY, true);
             assert imagesModel != null;
 
 
@@ -207,7 +214,6 @@ public class ImageListDisplayFragment extends Fragment {
                     }
                 });
                 recyclerView.setLayoutManager(layoutManager);
-
 
             }
         });

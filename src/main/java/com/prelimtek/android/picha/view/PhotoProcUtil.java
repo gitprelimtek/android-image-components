@@ -351,7 +351,11 @@ public class PhotoProcUtil extends DialogUtils {
     /**
      * This method is dependent on Media ViewModel being initialized in the calling activity/fragment
      */
+    @Deprecated
     public static void showOrRefreshImageListFragment(@NonNull FragmentManager childTransactionManager, boolean editable) {
+        showOrRefreshImageListFragment(childTransactionManager,editable,true);
+    }
+    public static void showOrRefreshImageListFragment(@NonNull FragmentManager childTransactionManager,  boolean editable, boolean enabled) {
 
         FragmentTransaction transaction = childTransactionManager.beginTransaction();
 
@@ -360,6 +364,7 @@ public class PhotoProcUtil extends DialogUtils {
         ImageListDisplayFragment newImgsListFragment = new ImageListDisplayFragment();
         Bundle imgBundle = new Bundle();
         imgBundle.putBoolean(ImageListDisplayFragment.IMAGE_IS_EDITABLE_BOOL_KEY, editable);
+        imgBundle.putBoolean(ImageListDisplayFragment.IMAGE_IS_ENABLED_BOOL_KEY, enabled);
         newImgsListFragment.setArguments(imgBundle);
 
 

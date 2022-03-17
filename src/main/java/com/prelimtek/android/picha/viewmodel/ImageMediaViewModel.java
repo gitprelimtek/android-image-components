@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.prelimtek.android.SingleLiveEvent;
 import com.prelimtek.android.alerts.DisplayAlertsBroadcastReceiver;
 import com.prelimtek.android.basecomponents.dao.BaseDAOFactory;
 import com.prelimtek.android.picha.ImagesModel;
@@ -31,6 +32,8 @@ public class ImageMediaViewModel extends AndroidViewModel {
     private MediaDAOInterface localDao;
     private MediaDAOInterface remoteDao;
     private ImagesModel oldImages;
+
+    public SingleLiveEvent<Boolean> addImageEnabled = new SingleLiveEvent<Boolean>();
 
     public ImageMediaViewModel(@NonNull Application application) {
         super(application);
@@ -149,6 +152,10 @@ public class ImageMediaViewModel extends AndroidViewModel {
 
         }
 
+    }
+
+    public MutableLiveData<Boolean> getAddImageEnabled() {
+        return addImageEnabled;
     }
 
 

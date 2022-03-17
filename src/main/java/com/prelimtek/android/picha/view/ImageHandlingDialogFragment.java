@@ -64,6 +64,7 @@ import static android.app.Activity.RESULT_OK;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class ImageHandlingDialogFragment extends DialogFragment implements OnImageDeletedListener {
 
+
     public interface OnImageEditedModelListener {
         //public void onImageModelEdited(ImagesModel newImages, ImagesModel oldImages);
         public void onImageModelEdited();
@@ -92,7 +93,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         //oldImagesModel = (ImagesModel)getArguments().getSerializable(ARG_SELECTED_MODEL_IMAGE);
         //dbHelper = (MediaDAOInterface)getArguments().getSerializable(ARG_DB_HELPER);
 
@@ -142,7 +142,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
         //create action listeners
         View updateBtn = view.findViewById(R.id.update_images_Btn );
-        //final ImagesModel oldImagesModel = imagesModel;
         updateBtn.setOnClickListener(
 
                 new View.OnClickListener(){
@@ -195,38 +194,57 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                 }
         );
 
+        getMediaViewModel().getAddImageEnabled().observeForever( enabledBool ->{
 
-        View photoBtn = view.findViewById(R.id.take_a_photo_button);
-        photoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
+            boolean enabled = enabledBool.booleanValue();
+            View photoBtn = view.findViewById(R.id.take_a_photo_button);
+            photoBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
 
-                dispatchTakePictureIntent();
-                //dispatchPhotoFile = PhotoProcUtil.dispatchTakePictureIntent(getActivity());
-            }
+                        if(enabled) {
+                            dispatchTakePictureIntent();
+                        }else{
+                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
+                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                        }
+                    }
+            });
+
+
+            View loadInternalPhotoBtn = view.findViewById(R.id.gallery_photo_button);
+            loadInternalPhotoBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        if(enabled) {
+                            pickGalleryImage();
+                        }else{
+                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
+                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                        }
+                    }
+            });
+
+
+
+            View loadExternalPhotoBtn = view.findViewById(R.id.external_photo_button );
+            loadExternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    if(enabled) {
+                        pickExternalStorageImage();
+                    }else{
+                        DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
+                        DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                    }
+                    //PhotoProcUtil.pickExternalStorageImage(getActivity());
+                }
+            });
+
         });
+        binding.setLifecycleOwner(lifecycleOwner);
 
-        View loadInternalPhotoBtn = view.findViewById(R.id.gallery_photo_button);
-        loadInternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                pickGalleryImage();
-                //PhotoProcUtil.pickGalleryImage(getActivity());
-
-            }
-        });
-
-
-        View loadExternalPhotoBtn = view.findViewById(R.id.external_photo_button );
-        loadExternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                pickExternalStorageImage();
-                //PhotoProcUtil.pickExternalStorageImage(getActivity());
-            }
-        });
 
         //Setup cancel button to ignore changes
         View cancelBtn = view.findViewById(R.id.cancel_images_edit_Btn  );
@@ -238,6 +256,7 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                     }
                 }
         );
+
 
         return view;
     }
