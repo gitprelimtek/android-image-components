@@ -13,6 +13,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.prelimtek.android.SingleLiveEvent;
+import androidx.lifecycle.MediatorLiveData;
 import com.prelimtek.android.alerts.DisplayAlertsBroadcastReceiver;
 import com.prelimtek.android.basecomponents.dao.BaseDAOFactory;
 import com.prelimtek.android.picha.ImagesModel;
@@ -33,7 +34,7 @@ public class ImageMediaViewModel extends AndroidViewModel {
     private MediaDAOInterface remoteDao;
     private ImagesModel oldImages;
 
-    public SingleLiveEvent<Boolean> addImageEnabled = new SingleLiveEvent<Boolean>();
+    //public MutableLiveData<Boolean> addImageEnabled = new MutableLiveData<Boolean>();
 
     public ImageMediaViewModel(@NonNull Application application) {
         super(application);
@@ -155,7 +156,7 @@ public class ImageMediaViewModel extends AndroidViewModel {
     }
 
     public MutableLiveData<Boolean> getAddImageEnabled() {
-        return addImageEnabled;
+        return PichaLifecycle.instance(getApplication()).getEnableImageControls();
     }
 
 
@@ -167,8 +168,9 @@ public class ImageMediaViewModel extends AndroidViewModel {
         final String modelId = newModel.getModelId();
 
         Stream<String> deleteList = (Stream<String>) (origModel == null ? Stream.empty() : origModel.getImageNames().stream()).filter(id -> !newModel.getImageNames().contains(id));
-
+        System.out.println("delete list count = "+deleteList.count());
         Stream<String> addList = newModel.getImageNames().stream().filter(id -> !(origModel == null ? Collections.emptyList() : origModel.getImageNames()).contains(id));
+        System.out.println("add list count = "+addList.count());
 
         deleteList.forEach(id -> {
             DisplayAlertsBroadcastReceiver.updateProgress(getApplication(), "deleting images", 25);
@@ -212,15 +214,17 @@ public class ImageMediaViewModel extends AndroidViewModel {
         myHandler.postDelayed(() -> {
             try {
                 ImagesModel newImages = loadCurEstateImages();
-
+                /*
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     updateDB(newImages, oldImages);
                 } else {
                     updateDBVintage(newImages, oldImages);
-                }
+                }*/
+                updateDBVintage(newImages, oldImages);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //ex.printStackTrace();
                 Log.e(TAG, ex.getMessage(), ex);
+                DisplayAlertsBroadcastReceiver.sendErrorMessage(context, ex.getMessage());
             }
         }, 200);
     }
