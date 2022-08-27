@@ -166,9 +166,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
                                 try {
                                     getMediaViewModel().completeUpdates();
-
-
-
                                     dismiss();
                                 }catch(Throwable e){
                                     Log.e(TAG,e.getMessage(),e);
@@ -195,7 +192,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
         );
 
         getMediaViewModel().getAddImageEnabled().observeForever( enabledBool ->{
-
             boolean enabled = enabledBool.booleanValue();
             View photoBtn = view.findViewById(R.id.take_a_photo_button);
             photoBtn.setOnClickListener(new View.OnClickListener() {
@@ -211,12 +207,10 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                     }
             });
 
-
             View loadInternalPhotoBtn = view.findViewById(R.id.gallery_photo_button);
             loadInternalPhotoBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                         if(enabled) {
                             pickGalleryImage();
                         }else{
@@ -225,8 +219,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                         }
                     }
             });
-
-
 
             View loadExternalPhotoBtn = view.findViewById(R.id.external_photo_button );
             loadExternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
@@ -244,7 +236,6 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
         });
         binding.setLifecycleOwner(lifecycleOwner);
-
 
         //Setup cancel button to ignore changes
         View cancelBtn = view.findViewById(R.id.cancel_images_edit_Btn  );
