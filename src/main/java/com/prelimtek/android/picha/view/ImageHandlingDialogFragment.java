@@ -197,12 +197,12 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
             photoBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        v.setEnabled(false);
                         if(enabled) {
                             dispatchTakePictureIntent();
                         }else{
-                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
-                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_higher));
+                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_higher));
                         }
                     }
             });
