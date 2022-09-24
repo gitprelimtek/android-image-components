@@ -1,4 +1,4 @@
-# android-image-components (Release_2.2.0)
+# android-image-components (Release_2.0.0)
 
 Incorporated MVVM and enable/disable functionality for premium products
 
