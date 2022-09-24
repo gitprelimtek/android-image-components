@@ -1,25 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/fab_transformation_sheet_behavior"
+    >
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="@color/image_list_background">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/imageslist_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         />
+
     </RelativeLayout>
 
+    <View
+        android:id="@+id/disable_layout_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.5"
+        android:elevation="5dp"
+        android:visibility="visible"/>
+
     <ProgressBar
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:alpha="0.8"
+        android:elevation="10dp"
         android:visibility="gone"
         android:id="@+id/load_image_progress"/>
 
@@ -29,5 +48,7 @@
         android:layout_margin="@dimen/page_icon_margin"
         android:id="@+id/current_image_view_id"
         />
+
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

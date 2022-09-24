@@ -1,8 +1,8 @@
 package com.prelimtek.android.picha.view;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -11,10 +11,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -23,19 +27,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ViewModelProvider;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.prelimtek.android.alerts.DisplayAlertsBroadcastReceiver;
 import com.prelimtek.android.basecomponents.Configuration;
-import com.prelimtek.android.basecomponents.dialog.DialogUtils;
 import com.prelimtek.android.picha.ImagesModel;
 import com.prelimtek.android.picha.R;
-import com.prelimtek.android.picha.dao.MediaDAOInterface;
 import com.prelimtek.android.picha.databinding.ImageHandlingFragmentLayoutBinding;
 import com.prelimtek.android.picha.view.listener.OnImageDeletedListener;
+import com.prelimtek.android.picha.viewmodel.ImageMediaViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -52,13 +59,15 @@ import static android.app.Activity.RESULT_OK;
 /**
  * This class' purpose is to edit ImagesModel url list.
  * 1. add url ( a mtini/http server url) based on photo or browsed image stored in the backend
- * 2. inplace of (1.) will be using image id where data is loaded into sqlLite at start of
- *   app and during adding. Therefore query sqlite by imageId
+ * 2. inplace of (1.) will be using image id where data is accessible using ViewModel using getMediaViewModel method
  *  */
+@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class ImageHandlingDialogFragment extends DialogFragment implements OnImageDeletedListener {
 
+
     public interface OnImageEditedModelListener {
-        public void onImageModelEdited(ImagesModel newImages, ImagesModel oldImages);
+        //public void onImageModelEdited(ImagesModel newImages, ImagesModel oldImages);
+        public void onImageModelEdited();
     }
 
     private OnImageEditedModelListener editCallBack = null;
@@ -68,19 +77,28 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     public final static String ARG_SELECTED_MODEL_IMAGE = "selectedModelImages";
     public final static String ARG_DB_HELPER = "dbHelper";
 
-    private ImagesModel currentImagesModel = null;
+    //private ImagesModel currentImagesModel = null;
     private ImagesModel oldImagesModel = null;
     private ImageHandlingFragmentLayoutBinding binding;
 
-    private MediaDAOInterface dbHelper;
+    //private MediaDAOInterface dbHelper;
+    private Activity callingActivity;
+    ImageMediaViewModel mediaViewModel;
+    private ImageMediaViewModel getMediaViewModel() {
+        if(mediaViewModel==null)
+            mediaViewModel = new ViewModelProvider((AppCompatActivity)getActivity(),new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication())).get(ImageMediaViewModel.class);
+        return mediaViewModel;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //oldImagesModel = (ImagesModel)getArguments().getSerializable(ARG_SELECTED_MODEL_IMAGE);
+        //dbHelper = (MediaDAOInterface)getArguments().getSerializable(ARG_DB_HELPER);
 
-        oldImagesModel = (ImagesModel)getArguments().getSerializable(ARG_SELECTED_MODEL_IMAGE);
-        dbHelper = (MediaDAOInterface)getArguments().getSerializable(ARG_DB_HELPER);
-
+        callingActivity = getActivity();
+        //oldImagesModel = getMediaViewModel().getCurrentImages().getValue();
+        /*
         if (savedInstanceState != null) {
 
             currentImagesModel = (ImagesModel)savedInstanceState.getSerializable(ARG_SELECTED_MODEL_IMAGE);
@@ -93,7 +111,7 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                 e.printStackTrace();
             }
 
-        }
+        }*/
     }
 
     @Override
@@ -116,42 +134,48 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
         if(binding==null){
             binding = DataBindingUtil.bind(view);
         }
-        binding.setImagesModel(currentImagesModel);
+
+        LifecycleOwner lifecycleOwner = (LifecycleOwner)getActivity();
+        getMediaViewModel().getCurrentImages().observe(lifecycleOwner,image -> {
+            binding.setImagesModel(image);
+        });
 
         //create action listeners
         View updateBtn = view.findViewById(R.id.update_images_Btn );
-        //final ImagesModel oldImagesModel = imagesModel;
         updateBtn.setOnClickListener(
 
                 new View.OnClickListener(){
                     @Override
                     public void onClick(final View v) {
 
+                        v.setEnabled(false);
+
                         ImageHandlingFragmentLayoutBinding binding  = DataBindingUtil.findBinding(v);
                         final ImagesModel newImagesModel = binding.getImagesModel();
 
-
-                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder( getActivity() );
+                        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder( callingActivity );
                         dialogBuilder.setMessage(R.string.dialog_changes_message)
                                 .setTitle(R.string.dialog_changes_title);
 
                         dialogBuilder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
 
                             public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
                                 // User clicked OK button
-                                Dialog progress = DialogUtils.startProgressDialog( getActivity() );
+                                //DisplayAlertsBroadcastReceiver.startGenericProgress(callingActivity,"Updating images dialog");
 
                                 try {
-                                    updateComplete(newImagesModel, oldImagesModel);
+                                    getMediaViewModel().completeUpdates();
+                                    dismiss();
                                 }catch(Throwable e){
                                     Log.e(TAG,e.getMessage(),e);
-                                    progress.dismiss();
-                                    DialogUtils.startErrorDialog( getActivity() ,"An error occurred. '"+e.getLocalizedMessage()+"'" );
+                                    DisplayAlertsBroadcastReceiver.sendErrorMessage(callingActivity,"An error occurred. '"+e.getLocalizedMessage()+"'");
                                     return;
+                                }finally{
+                                    //DisplayAlertsBroadcastReceiver.stopProgress(callingActivity);
+                                    //ImageHandlingDialogFragment.super.dismiss();
+                                    updateComplete();
                                 }
-
-                                progress.dismiss();
-                                dismiss();
                             }
                         });
 
@@ -167,38 +191,51 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                 }
         );
 
+        getMediaViewModel().getAddImageEnabled().observeForever( enabledBool ->{
+            boolean enabled = enabledBool.booleanValue();
+            View photoBtn = view.findViewById(R.id.take_a_photo_button);
+            photoBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        v.setEnabled(false);
+                        if(enabled) {
+                            dispatchTakePictureIntent();
+                        }else{
+                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_higher));
+                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_higher));
+                        }
+                    }
+            });
 
-        View photoBtn = view.findViewById(R.id.take_a_photo_button);
-        photoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
+            View loadInternalPhotoBtn = view.findViewById(R.id.gallery_photo_button);
+            loadInternalPhotoBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(enabled) {
+                            pickGalleryImage();
+                        }else{
+                            DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
+                            DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                        }
+                    }
+            });
 
-                dispatchTakePictureIntent();
-                //dispatchPhotoFile = PhotoProcUtil.dispatchTakePictureIntent(getActivity());
-            }
+            View loadExternalPhotoBtn = view.findViewById(R.id.external_photo_button );
+            loadExternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    if(enabled) {
+                        pickExternalStorageImage();
+                    }else{
+                        DisplayAlertsBroadcastReceiver.sendPopupMessage(getActivity(),getString(R.string.upgrage_to_premium));
+                        DisplayAlertsBroadcastReceiver.sendNotification(getActivity(),1234,getString(R.string.upgrage_notification_title),getString(R.string.upgrage_to_premium));
+                    }
+                    //PhotoProcUtil.pickExternalStorageImage(getActivity());
+                }
+            });
+
         });
-
-        View loadInternalPhotoBtn = view.findViewById(R.id.gallery_photo_button);
-        loadInternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                pickGalleryImage();
-                //PhotoProcUtil.pickGalleryImage(getActivity());
-
-            }
-        });
-
-
-        View loadExternalPhotoBtn = view.findViewById(R.id.external_photo_button );
-        loadExternalPhotoBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-
-                pickExternalStorageImage();
-                //PhotoProcUtil.pickExternalStorageImage(getActivity());
-            }
-        });
+        binding.setLifecycleOwner(lifecycleOwner);
 
         //Setup cancel button to ignore changes
         View cancelBtn = view.findViewById(R.id.cancel_images_edit_Btn  );
@@ -211,10 +248,12 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                 }
         );
 
+
         return view;
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -506,11 +545,11 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     /**
      * This is called by the update button upon satisfactory editing in this fragment
      * */
-    public void updateComplete(ImagesModel newImages, ImagesModel oldImages){
+    public void updateComplete(){
         if(editCallBack==null){
             editCallBack = (OnImageEditedModelListener) this.getActivity();
         }
-        editCallBack.onImageModelEdited(newImages,oldImages);
+        editCallBack.onImageModelEdited();
 
     }
 
@@ -539,16 +578,16 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
 
                         String encodedImageString = PhotoProcUtil.StringifyBitmapCodec.encode(bitmap);
                         UUID id = UUID.randomUUID();
-                        if (dbHelper.addImage(id.toString(), null, encodedImageString) ) {
-                            currentImagesModel.addImageName(id.toString());
+                        if(getMediaViewModel().addLocalImage(id.toString(), encodedImageString)) {
+                            getMediaViewModel().getCurrentImages().getValue().addImageName(id.toString());
                         }
+
                         //inputStream.close();
 
                     } catch (Exception e) {
-                        e.printStackTrace();
-                        Log.e(TAG,e.getMessage(),e);
-                    }finally{
 
+                        Log.e(TAG,e.getMessage(),e);
+                        DisplayAlertsBroadcastReceiver.sendErrorMessage(getActivity(),"Request image capture error: "+e.getMessage());
                     }
 
                 }
@@ -568,12 +607,13 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
                         String encodedImageString = PhotoProcUtil.StringifyBitmapCodec.encode(bitmap);
 
                         UUID id = UUID.randomUUID();
-                        if (dbHelper.addImage(id.toString(), null, encodedImageString)) {
-                            currentImagesModel.addImageName(id.toString());
+
+                        if(getMediaViewModel().addLocalImage(id.toString(), encodedImageString) ){
+                            getMediaViewModel().getCurrentImages().getValue().addImageName(id.toString());
                         }
                     }catch(Exception e){
-                        e.printStackTrace();
                         Log.e(TAG,e.getMessage(),e);
+                        DisplayAlertsBroadcastReceiver.sendErrorMessage(getActivity(),"Request take photo error: "+e.getMessage());
                     }
 
                 }
@@ -588,7 +628,7 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     //TODO remove and use PhotoProcUtil methods
     private void refreshListFragment(){
 
-        System.out.println("!!!!!!!!  refreshListFragment called -> currentImagesModel size ="+currentImagesModel.getImageNames().size());
+        //System.out.println("!!!!!!!!  refreshListFragment called -> currentImagesModel size ="+currentImagesModel.getImageNames().size());
 
         FragmentManager childTransactionManager = getChildFragmentManager();
 
@@ -597,9 +637,9 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
         Fragment oldFragment = childTransactionManager.findFragmentById(R.id.image_list_fragment);
 
         ImageListDisplayFragment newImgsListFragment = new ImageListDisplayFragment();
-        newImgsListFragment.setDBHelper(dbHelper);
+        //newImgsListFragment.setDBHelper(dbHelper);
         Bundle imgBundle = new Bundle();
-        imgBundle.putSerializable(ImageListDisplayFragment.IMAGE_LIST_OBJECT_KEY, currentImagesModel);
+        //imgBundle.putSerializable(ImageListDisplayFragment.IMAGE_LIST_OBJECT_KEY, currentImagesModel);
         imgBundle.putBoolean(ImageListDisplayFragment.IMAGE_IS_EDITABLE_BOOL_KEY, true);
         newImgsListFragment.setArguments(imgBundle);
 
@@ -660,24 +700,36 @@ public class ImageHandlingDialogFragment extends DialogFragment implements OnIma
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if(outState!=null) {
+       /* if(outState!=null) {
             ImagesModel newImagesModel = binding.getImagesModel();
             outState.putSerializable(ARG_SELECTED_MODEL_IMAGE, newImagesModel);
         }
+
+        */
     }
 
     @Override
     public void onViewStateRestored(Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
-        if(savedInstanceState!=null) {
+        /*if(savedInstanceState!=null) {
             this.currentImagesModel = (ImagesModel) savedInstanceState.getSerializable(ARG_SELECTED_MODEL_IMAGE);
-        }
+        }*/
     }
 
     @Override
     public void onImageDeleted(final String imageId) {
         System.out.println("!!!!!!!!!!!!     onImageDeleted called");
-        currentImagesModel.getImageNames().remove(imageId);
+        //currentImagesModel.getImageNames().remove(imageId);
+        try {
+            if(getMediaViewModel().deleteLocalImage(imageId)){
+                getMediaViewModel().getCurrentImages().getValue().removeImageName(imageId);
+            }
+        } catch (Exception e) {
+
+            Log.e(TAG,e.getMessage(),e);
+            DisplayAlertsBroadcastReceiver.sendErrorMessage(getActivity(),"Request delete photo error: "+e.getMessage());
+
+        }
         refreshListFragment();
     }
 
